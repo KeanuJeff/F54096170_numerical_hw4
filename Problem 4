@@ -1,0 +1,28 @@
+import numpy as np
+
+
+def simpsons_rule(f, a, b, n):
+    if n % 2 != 0:
+        raise ValueError("n 必須是偶數")
+    h = (b - a) / n
+    x = np.linspace(a, b, n + 1)
+    fx = f(x)
+    return (h / 3) * (fx[0] + 4 * np.sum(fx[1:-1:2]) + 2 * np.sum(fx[2:-2:2]) + fx[-1])
+
+
+def f_a(x):
+    return x**(-1/4) * np.sin(x)
+
+
+epsilon = 1e-6
+int_a = simpsons_rule(f_a, epsilon, 1, 4)
+
+
+def f_b(t):
+    return t**2 * np.sin(1 / t)
+
+
+int_b = simpsons_rule(f_b, epsilon, 1, 4)
+
+print("Part (a):", int_a)
+print("Part (b):", int_b)
