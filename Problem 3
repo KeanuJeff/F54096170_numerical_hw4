@@ -1,0 +1,77 @@
+import numpy as np
+
+# 定義被積函數
+def f(x, y):
+    return 2 * y * np.sin(x) + np.cos(x)**2
+
+
+def simpsons_rule_1d(f, a, b, n):
+    if n % 2 != 0:
+        raise ValueError("n 必須是偶數")
+    h = (b - a) / n
+    x = np.linspace(a, b, n + 1)
+    fx = f(x)
+    return (h / 3) * (fx[0] + 4 * np.sum(fx[1:-1:2]) + 2 * np.sum(fx[2:-2:2]) + fx[-1])
+
+
+def simpsons_2d(n=4, m=4):
+    x_vals = np.linspace(0, np.pi / 4, n + 1)
+    h_x = (np.pi / 4) / n
+
+    result = 0
+    for i in range(n + 1):
+        x = x_vals[i]
+        a_y = np.sin(x)
+        b_y = np.cos(x)
+
+        
+        fy = lambda y: f(x, y)
+        inner = simpsons_rule_1d(fy, a_y, b_y, m)
+
+        coeff = 1
+        if i == 0 or i == n:
+            coeff = 1
+        elif i % 2 == 0:
+            coeff = 2
+        else:
+            coeff = 4
+
+        result += coeff * inner
+
+    return (h_x / 3) * result
+
+from numpy.polynomial.legendre import leggauss
+
+def gaussian_2d(n=3, m=3):
+    x_nodes, x_weights = leggauss(n)
+    total = 0
+
+    for i in range(n):
+        
+        x = 0.5 * (np.pi / 4) * x_nodes[i] + 0.5 * (np.pi / 4)
+        wx = x_weights[i] * 0.5 * (np.pi / 4)
+
+        y_a, y_b = np.sin(x), np.cos(x)
+        y_nodes, y_weights = leggauss(m)
+
+        inner = 0
+        for j in range(m):
+            
+            y = 0.5 * (y_b - y_a) * y_nodes[j] + 0.5 * (y_b + y_a)
+            wy = y_weights[j] * 0.5 * (y_b - y_a)
+
+            inner += wy * f(x, y)
+
+        total += wx * inner
+
+    return total
+
+from scipy.integrate import dblquad
+
+exact, _ = dblquad(f, 0, np.pi / 4, lambda x: np.sin(x), lambda x: np.cos(x))
+
+simpson_result = simpsons_2d()
+gauss_result = gaussian_2d()
+print("Simpson's Rule:", simpson_result, "%err = ", (simpson_result-exact)/exact*100)
+print("Gaussian Quadrature:", gauss_result, "%err = ", (gauss_result-exact)/exact*100)
+print("Exact value:", exact)
